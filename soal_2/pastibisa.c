@@ -101,12 +101,6 @@ static int myfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off
     return 0;
 }
 
-void decode_base64(char *output, const char *input) {
-    // Implementasi decoding Base64
-    // Misalnya menggunakan library base64
-    // snprintf(output, strlen(input), "decoded base64: %s", input);
-}
-
 void decode_rot13(char *output, const char *input) {
     for (int i = 0; input[i]; i++) {
         if ((input[i] >= 'A' && input[i] <= 'Z') || (input[i] >= 'a' && input[i] <= 'z')) {
