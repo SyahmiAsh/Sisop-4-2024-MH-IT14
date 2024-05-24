@@ -382,6 +382,32 @@ Program FUSE di atas menyediakan implementasi sistem file virtual yang melakukan
 - do_chmod: Mengubah izin akses dari file atau direktori yang ditentukan oleh path.
 - do_chown: Mengubah pemilik dan grup dari file atau direktori yang ditentukan oleh path.
 
+Command yang dapat dijalankan di dalam fuse tersebut
+- ls: Menampilkan daftar file dan direktori di dalam filesystem.
+Perintah ini akan memanggil fungsi do_readdir.
+- cat: Menampilkan isi file.
+Perintah ini akan memanggil fungsi do_open dan do_read.
+- echo: Menulis teks ke file.
+Perintah ini akan memanggil fungsi do_create (jika file belum ada) dan do_write.
+- touch: Membuat file baru.
+Perintah ini akan memanggil fungsi do_create.
+- rm: Menghapus file.
+Perintah ini akan memanggil fungsi do_unlink.
+- mkdir: Membuat direktori baru.
+Perintah ini akan memanggil fungsi do_mkdir.
+- rmdir: Menghapus direktori kosong.
+Perintah ini akan memanggil fungsi do_rmdir.
+- chmod: Mengubah izin file atau direktori.
+Perintah ini akan memanggil fungsi do_chmod.
+- chown: Mengubah kepemilikan file atau direktori.
+Perintah ini akan memanggil fungsi do_chown.
+- mv: Memindahkan atau mengganti nama file atau direktori.
+Meskipun tidak ada fungsi rename yang didefinisikan dalam kode, mv akan bekerja dengan menggabungkan operasi rename dari sistem file dasar.
+- cp: Menyalin file.
+Perintah ini akan memanggil fungsi do_create dan do_write untuk file tujuan.
+- truncate: Mengubah ukuran file.
+Perintah ini akan memanggil fungsi do_truncate.
+
 Cara Penggunaan
 ```
 cp twibbon.jpg ./fuze
