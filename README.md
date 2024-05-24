@@ -449,6 +449,8 @@ usermount -u fuze
 ```
 ![image](https://github.com/SyahmiAsh/Sisop-4-2024-MH-IT14/assets/88548292/76241d2b-0f8b-4a9d-b0fd-621de9e8e57f)
 
+![image](https://github.com/SyahmiAsh/Sisop-4-2024-MH-IT14/assets/88548292/9729d439-0858-4aa3-ac75-7e7d683aa671)
+
 
 Membagikan direktory `report` menggunakan samba
 
