@@ -365,6 +365,32 @@ static int do_chown(const char *path, uid_t uid, gid_t gid) {
     return FUSE_SUCCESS ;
 }
 ```
+
+Program FUSE di atas menyediakan implementasi sistem file virtual yang melakukan berbagai operasi pada file dan direktori. Berikut adalah deskripsi singkat tentang setiap fungsi yang diimplementasikan dalam program ini dan fungsinya:
+- get_full_path: Menggabungkan root_path dengan path yang diberikan untuk mendapatkan jalur absolut lengkap dari file atau direktori.
+- get_file_size: Menghitung ukuran total file dengan menggabungkan ukuran dari semua bagian file yang dipecah.
+- do_getattr: Mengambil atribut file atau direktori yang ditentukan oleh path. Mengembalikan informasi seperti jenis file, ukuran, dan izin akses.
+- do_readdir: Membaca konten dari direktori dan mengisi buffer dengan nama-nama file yang ada. Hanya file dengan ekstensi .000 yang ditampilkan, tanpa menampilkan ekstensi.
+- do_open: Membuka file yang ditentukan oleh path untuk membaca. Membuka bagian pertama dari file yang dipecah.
+- do_read: Membaca data dari file yang ditentukan oleh path dari offset yang diberikan hingga sejumlah size byte. Membaca dari bagian-bagian file yang dipecah.
+- do_write: Menulis data ke file yang ditentukan oleh path dari offset yang diberikan. Data ditulis ke bagian-bagian file yang dipecah dengan ukuran maksimum 10.000 byte per bagian.
+- do_unlink: Menghapus file yang ditentukan oleh path. Menghapus semua bagian file yang dipecah.
+- do_create: Membuat file baru dengan mode yang ditentukan. Membuat bagian pertama dari file yang dipecah.
+- do_truncate: Memotong atau memperpanjang file yang ditentukan oleh path ke ukuran yang diberikan. Menyesuaikan bagian-bagian file yang dipecah agar sesuai dengan ukuran baru.
+- do_mkdir: Membuat direktori baru dengan mode yang ditentukan.
+- do_rmdir: Menghapus direktori yang ditentukan oleh path.
+- do_chmod: Mengubah izin akses dari file atau direktori yang ditentukan oleh path.
+- do_chown: Mengubah pemilik dan grup dari file atau direktori yang ditentukan oleh path.
+
+Cara Penggunaan
+```
+cp twibbon.jpg ./fuze
+cp ./fuze/relic_1.png .
+cp twibbon.jpg ./fuze
+rm twibbon*
+cp fuze/* report/  
+```
+
 Membagikan direktory `report` menggunakan samba
 
 ```
