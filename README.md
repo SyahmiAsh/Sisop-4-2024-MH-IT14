@@ -366,7 +366,7 @@ static int do_chown(const char *path, uid_t uid, gid_t gid) {
     return FUSE_SUCCESS ;
 }
 ```
-
+#### Deskripsi Fungsi
 Program FUSE di atas menyediakan implementasi sistem file virtual yang melakukan berbagai operasi pada file dan direktori. Berikut adalah deskripsi singkat tentang setiap fungsi yang diimplementasikan dalam program ini dan fungsinya:
 - get_full_path: Menggabungkan root_path dengan path yang diberikan untuk mendapatkan jalur absolut lengkap dari file atau direktori.
 - get_file_size: Menghitung ukuran total file dengan menggabungkan ukuran dari semua bagian file yang dipecah.
@@ -383,7 +383,7 @@ Program FUSE di atas menyediakan implementasi sistem file virtual yang melakukan
 - do_chmod: Mengubah izin akses dari file atau direktori yang ditentukan oleh path.
 - do_chown: Mengubah pemilik dan grup dari file atau direktori yang ditentukan oleh path.
 
-Command yang dapat dijalankan di dalam fuse tersebut
+#### Command yang dapat dijalankan di dalam fuse tersebut
 - ls: Menampilkan daftar file dan direktori di dalam filesystem.
 Perintah ini akan memanggil fungsi do_readdir.
 - cat: Menampilkan isi file.
@@ -409,37 +409,33 @@ Perintah ini akan memanggil fungsi do_create dan do_write untuk file tujuan.
 - truncate: Mengubah ukuran file.
 Perintah ini akan memanggil fungsi do_truncate.
 
-Pemecahan File (Splitting)
+#### Pemecahan File (Splitting)
 Ketika menulis ke file, program memecah data menjadi beberapa bagian kecil dan menyimpannya sebagai file yang terpisah. Setiap bagian file disimpan dengan nama yang diakhiri dengan .000, .001, .002, dan seterusnya.
 
 do_write
 Fungsi do_write bertanggung jawab untuk menulis data ke file dan memecahnya menjadi beberapa bagian jika diperlukan.
-
-Lokasi dan Offset: Menentukan bagian file berdasarkan offset.
-Loop: Menulis data ke file bagian hingga semua data tertulis.
-Nama File: Setiap bagian diberi nama dengan format {fullpath}.{part_num}, di mana part_num adalah nomor bagian yang diurutkan.
+- Lokasi dan Offset: Menentukan bagian file berdasarkan offset.
+- Loop: Menulis data ke file bagian hingga semua data tertulis.
+- Nama File: Setiap bagian diberi nama dengan format {fullpath}.{part_num}, di mana part_num adalah nomor bagian yang diurutkan.
 Berikut adalah langkah-langkah yang diambil oleh do_write:
-
 1. Hitung nomor bagian (part_num) berdasarkan offset.
 2. Hitung offset dalam bagian (part_offset).
 3. Tulis data ke bagian file.
 4. Lanjutkan ke bagian berikutnya hingga semua data tertulis.
 
-Penggabungan File (Merging)
+#### Penggabungan File (Merging)
 Ketika membaca file, program menggabungkan data dari beberapa bagian file menjadi satu konten yang utuh.
 
 do_read
 Fungsi do_read bertanggung jawab untuk membaca data dari file yang dipecah menjadi beberapa bagian dan menggabungkannya kembali menjadi satu konten utuh.
-
-Lokasi dan Offset: Menentukan bagian file berdasarkan offset.
-Loop: Membaca data dari bagian file hingga jumlah data yang diminta tercapai.
-Nama File: Setiap bagian file diakses dengan nama yang berurutan sesuai nomor bagian (.000, .001, dll).
+- Lokasi dan Offset: Menentukan bagian file berdasarkan offset.
+- Loop: Membaca data dari bagian file hingga jumlah data yang diminta tercapai.
+- Nama File: Setiap bagian file diakses dengan nama yang berurutan sesuai nomor bagian (.000, .001, dll).
 Berikut adalah langkah-langkah singkat yang diambil oleh do_read:
-
-Hitung nomor bagian (part_num) berdasarkan offset.
-Hitung offset dalam bagian (part_offset).
-Baca data dari bagian file.
-Lanjutkan ke bagian berikutnya hingga semua data terbaca atau jumlah data yang diminta tercapai.
+1. Hitung nomor bagian (part_num) berdasarkan offset.
+2. Hitung offset dalam bagian (part_offset).
+3. Baca data dari bagian file.
+4. Lanjutkan ke bagian berikutnya hingga semua data terbaca atau jumlah data yang diminta tercapai.
 
 Cara Penggunaan
 ```
