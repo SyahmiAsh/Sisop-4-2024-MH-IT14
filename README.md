@@ -460,12 +460,12 @@ usermount -u fuze
 
 ![image](https://github.com/SyahmiAsh/Sisop-4-2024-MH-IT14/assets/88548292/76241d2b-0f8b-4a9d-b0fd-621de9e8e57f)
 
-- Ketika dilakukan copy (dari direktori [nama_bebas] ke tujuan manapun), file yang disalin adalah file dari direktori relics yang sudah tergabung.
+- Ketika dilakukan copy (dari direktori fuze ke tujuan manapun), file yang disalin adalah file dari direktori relics yang sudah tergabung.
 - Ketika dilakukan penghapusan, maka semua pecahannya juga ikut terhapus.
 
 ![image](https://github.com/SyahmiAsh/Sisop-4-2024-MH-IT14/assets/88548292/9729d439-0858-4aa3-ac75-7e7d683aa671)
 
-- Direktori report adalah direktori yang akan dibagikan menggunakan Samba File Server. Setelah kalian berhasil membuat direktori [nama_bebas], jalankan FUSE dan salin semua isi direktori [nama_bebas] pada direktori report.
+- Direktori report adalah direktori yang akan dibagikan menggunakan Samba File Server. Setelah kalian berhasil membuat direktori fuze, jalankan FUSE dan salin semua isi direktori fuze pada direktori report.
 
 ![image](https://github.com/SyahmiAsh/Sisop-4-2024-MH-IT14/assets/88548292/365e702d-7b09-4aee-b926-81feb6b78028)
 
