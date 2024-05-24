@@ -454,6 +454,21 @@ service smbd status
 vim /etc/samba/smb.conf
 sudo service smbd stop
 ```
+Konfigurasi samba `vim /etc/samba/smb.conf`
+```
+[bagibagi]
+     comment = Samba on Ubuntu
+     path = /home/kali/Sisop/modul4/soal_3/report
+     read only = no
+     browsable = yes
+     writable = yes
+     guest ok = no
+```
+Memulai smb service
+![image](https://github.com/SyahmiAsh/Sisop-4-2024-MH-IT14/assets/88548292/109f605e-af3f-4eeb-a3f5-5856f8b01b51)
+Melihat folder report 
+![image](https://github.com/SyahmiAsh/Sisop-4-2024-MH-IT14/assets/88548292/63f83f40-f7b9-4716-9219-10a6b4f55581)
+![image](https://github.com/SyahmiAsh/Sisop-4-2024-MH-IT14/assets/88548292/feb48440-4851-42c2-a766-e629fd23b3a2)
 
 ### Revisi 
 Tidak ada catatan dari asisten penguji
