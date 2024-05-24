@@ -365,6 +365,14 @@ static int do_chown(const char *path, uid_t uid, gid_t gid) {
     return FUSE_SUCCESS ;
 }
 ```
+Membagikan direktory `report` menggunakan samba
+
+```
+sudo service smbd start
+service smbd status
+vim /etc/samba/smb.conf
+sudo service smbd stop
+```
 
 ### Revisi 
 Tidak ada catatan dari asisten penguji
