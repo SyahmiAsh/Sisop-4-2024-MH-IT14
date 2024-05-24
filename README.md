@@ -451,6 +451,8 @@ usermount -u fuze
 
 ![image](https://github.com/SyahmiAsh/Sisop-4-2024-MH-IT14/assets/88548292/9729d439-0858-4aa3-ac75-7e7d683aa671)
 
+![image](https://github.com/SyahmiAsh/Sisop-4-2024-MH-IT14/assets/88548292/365e702d-7b09-4aee-b926-81feb6b78028)
+
 
 Membagikan direktory `report` menggunakan samba
 
@@ -480,7 +482,7 @@ Melihat ip dari linux
 ip addr
 ```
 
-Menghubungkan dengan file manager `windows` dengan `\\ip-address\sambashare`
+Menghubungkan file manager `windows` folder report dengan menggunakan `\\ip-address\sambashare`
 
 ![image](https://github.com/SyahmiAsh/Sisop-4-2024-MH-IT14/assets/88548292/63f83f40-f7b9-4716-9219-10a6b4f55581)
 
