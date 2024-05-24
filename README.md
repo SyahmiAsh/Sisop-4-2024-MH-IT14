@@ -10,6 +10,9 @@ Muhammad Faqih Husain 5027231023
 
 Seorang arkeolog menemukan sebuah gua yang didalamnya tersimpan banyak relik dari zaman praaksara, sayangnya semua barang yang ada pada gua tersebut memiliki bentuk yang terpecah belah akibat bencana yang tidak diketahui. Sang arkeolog ingin menemukan cara cepat agar ia bisa menggabungkan relik-relik yang terpecah itu, namun karena setiap pecahan relik itu masih memiliki nilai tersendiri, ia memutuskan untuk membuat sebuah file system yang mana saat ia mengakses file system tersebut ia dapat melihat semua relik dalam keadaan utuh, sementara relik yang asli tidak berubah sama sekali.
 
+File relic
+https://drive.google.com/file/d/1BJkaBvGaxqiwPWvXRdYNXzxxmIYQ8FKf/view?usp=sharing
+
 ### Solusi 
 
 #### `Archeology.c`
@@ -443,13 +446,22 @@ Cara Penggunaan
 cp twibbon.jpg ./fuze
 cp ./fuze/relic_1.png .
 cp twibbon.jpg ./fuze
-rm twibbon*
+rm ./fuze/relic_1.png
 cp fuze/* report/  
 usermount -u fuze
 ```
+- Ketika dilakukan listing, isi dari direktori `fuze` adalah semua relic dari relics yang telah tergabung.
+- Ketika ada file dibuat, maka pada direktori asal (direktori relics) file tersebut akan dipecah menjadi sejumlah pecahan dengan ukuran maksimum tiap pecahan adalah 10kb.
+- File yang dipecah akan memiliki nama [namafile].000 dan seterusnya sesuai dengan jumlah pecahannya.
+
 ![image](https://github.com/SyahmiAsh/Sisop-4-2024-MH-IT14/assets/88548292/76241d2b-0f8b-4a9d-b0fd-621de9e8e57f)
 
+- Ketika dilakukan copy (dari direktori [nama_bebas] ke tujuan manapun), file yang disalin adalah file dari direktori relics yang sudah tergabung.
+- Ketika dilakukan penghapusan, maka semua pecahannya juga ikut terhapus.
+
 ![image](https://github.com/SyahmiAsh/Sisop-4-2024-MH-IT14/assets/88548292/9729d439-0858-4aa3-ac75-7e7d683aa671)
+
+- Direktori report adalah direktori yang akan dibagikan menggunakan Samba File Server. Setelah kalian berhasil membuat direktori [nama_bebas], jalankan FUSE dan salin semua isi direktori [nama_bebas] pada direktori report.
 
 ![image](https://github.com/SyahmiAsh/Sisop-4-2024-MH-IT14/assets/88548292/365e702d-7b09-4aee-b926-81feb6b78028)
 
