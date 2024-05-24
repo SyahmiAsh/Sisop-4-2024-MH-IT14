@@ -439,12 +439,16 @@ Berikut adalah langkah-langkah singkat yang diambil oleh do_read:
 
 Cara Penggunaan
 ```
+./archeology fuze
 cp twibbon.jpg ./fuze
 cp ./fuze/relic_1.png .
 cp twibbon.jpg ./fuze
 rm twibbon*
 cp fuze/* report/  
+usermount -u fuze
 ```
+![image](https://github.com/SyahmiAsh/Sisop-4-2024-MH-IT14/assets/88548292/76241d2b-0f8b-4a9d-b0fd-621de9e8e57f)
+
 
 Membagikan direktory `report` menggunakan samba
 
