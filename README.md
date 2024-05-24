@@ -2,6 +2,10 @@
 
 Muhammad Faqih Husain 5027231023
 
+## Soal 1
+
+## Soal 2
+
 ## Soal 3
 
 ### Solusi 
