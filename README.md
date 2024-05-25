@@ -48,7 +48,7 @@ untuk alokasi file script.sh
 // Function to add watermark to an image using ImageMagick
 int add_watermark(const char *filepath) {
     char command[1024];
-    snprintf(command, sizeof(command), "convert %s -gravity SouthEast -pointsize 36 -draw \"text 10,10 'inikaryakita.id'\" %s", filepath, filepath);
+    snprintf(command, sizeof(command), "convert %s -gravity South -fill white -pointsize 40 -draw \"text 0,10 'inikaryakita.id'\" %s", filepath, filepath);
     syslog(LOG_INFO, "Executing command: %s", command); // Log the command to be executed
     int result = system(command);
     if (result != 0) {
