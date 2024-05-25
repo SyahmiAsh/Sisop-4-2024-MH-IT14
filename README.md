@@ -238,9 +238,520 @@ hasil
 - watermark foto
  
 
-
 ## Soal 2
-Masih dengan Ini Karya Kita, sang CEO ingin melakukan tes keamanan pada folder sensitif Ini Karya Kita. Karena Teknologi Informasi merupakan departemen dengan salah satu fokus di Cyber Security, maka dia kembali meminta bantuan mahasiswa Teknologi Informasi angkatan 2023 untuk menguji dan mengatur keamanan pada folder sensitif tersebut. Untuk mendapatkan folder sensitif itu, mahasiswa IT 23 harus kembali mengunjungi website Ini Karya Kita pada www.inikaryakita.id/schedule . Silahkan isi semua formnya, tapi pada form subject isi dengan nama kelompok_SISOP24 , ex: IT01_SISOP24 . Lalu untuk form Masukkan Pesanmu, ketik “Mau Foldernya” . Tunggu hingga 1x24 jam, maka folder sensitif tersebut akan dikirimkan melalui email kalian. Apabila folder tidak dikirimkan ke email kalian, maka hubungi sang CEO untuk meminta bantuan.
+
+Masih dengan Ini Karya Kita, sang CEO ingin melakukan tes keamanan pada folder sensitif Ini Karya Kita. Karena Teknologi Informasi merupakan departemen dengan salah satu fokus di Cyber Security, maka dia kembali meminta bantuan mahasiswa Teknologi Informasi angkatan 2023 untuk menguji dan mengatur keamanan pada folder sensitif tersebut. Untuk mendapatkan folder sensitif itu, mahasiswa IT 23 harus kembali mengunjungi website Ini Karya Kita pada www.inikaryakita.id/schedule . Silahkan isi semua formnya, tapi pada form subject isi dengan nama kelompok_SISOP24 , ex: IT01_SISOP24 . Lalu untuk form Masukkan Pesanmu, ketik “Mau Foldernya” . Tunggu hingga 1x24 jam, maka folder sensitif tersebut akan dikirimkan melalui email kalian. Apabila folder tidak dikirimkan ke email kalian, maka hubungi sang CEO untuk meminta bantuan.   
+- Pada folder "pesan" Adfi ingin meningkatkan kemampuan sistemnya dalam mengelola berkas-berkas teks dengan menggunakan fuse.
+- Jika sebuah file memiliki prefix "base64," maka sistem akan langsung mendekode isi file tersebut dengan algoritma Base64.
+- Jika sebuah file memiliki prefix "rot13," maka isi file tersebut akan langsung di-decode dengan algoritma ROT13.
+- Jika sebuah file memiliki prefix "hex," maka isi file tersebut akan langsung di-decode dari representasi heksadesimalnya.
+- Jika sebuah file memiliki prefix "rev," maka isi file tersebut akan langsung di-decode dengan cara membalikkan teksnya.
+- Pada folder “rahasia-berkas”, Adfi dan timnya memutuskan untuk menerapkan kebijakan khusus. Mereka ingin memastikan bahwa folder dengan prefix "rahasia" tidak dapat diakses tanpa izin khusus. 
+- Jika seseorang ingin mengakses folder dan file pada “rahasia”, mereka harus memasukkan sebuah password terlebih dahulu (password bebas). 
+- Setiap proses yang dilakukan akan tercatat pada logs-fuse.log dengan format :
+[SUCCESS/FAILED]::dd/mm/yyyy-hh:mm:ss::[tag]::[information]
+Ex:
+[SUCCESS]::01/11/2023-10:43:43::[moveFile]::[File moved successfully]
+
+### Penyelesaian
+```
+#define FUSE_USE_VERSION 30
+
+#include <fuse.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <dirent.h>
+#include <ctype.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <time.h>
+#include <openssl/bio.h>
+#include <openssl/evp.h>
+
+static const char *source_dir = "/home/tsll/gpp/sensitif";
+static const char *log_file_path = "/home/tsll/pst/log.txt";
+static const char base64_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+static void log_event(const char *tag, const char *information, int success) {
+    time_t now;
+    struct tm *local_time;
+    char timestamp[20];
+
+    time(&now);
+    local_time = localtime(&now);
+    strftime(timestamp, sizeof(timestamp), "%d/%m/%Y-%H:%M:%S", local_time);
+
+    FILE *log_file = fopen(log_file_path, "a");
+    if (log_file == NULL) {
+        fprintf(stderr, "Error opening log file %s: %s\n", log_file_path, strerror(errno));
+        return;
+    }
+
+    fprintf(log_file, "[%s]::%s::[%s]::[%s]\n", success ? "SUCCESS" : "FAILED", timestamp, tag, information);
+    fclose(log_file);
+}
+
+
+static void decrypt_rot13(char *str) {
+    if (!str) return;
+    for (int i = 0; str[i]; i++) {
+        if (isalpha(str[i])) {
+            char base = isupper(str[i]) ? 'A' : 'a';
+            str[i] = (((str[i] - base) - 13 + 26) % 26) + base;
+        }
+    }
+}
+
+static void decode_hex(const char *input, char *output) {
+    size_t len = strlen(input) / 2;
+    for (size_t i = 0; i < len; i++) {
+        sscanf(input + 2 * i, "%2hhx", &output[i]);
+    }
+    output[len] = '\0';
+}
+
+
+static void reverse_string(char *str) {
+    int len = strlen(str);
+    for (int i = 0; i < len / 2; i++) {
+        char temp = str[i];
+        str[i] = str[len - i - 1];
+        str[len - i - 1] = temp;
+    }
+}
+
+
+static void decode_base64(const char *input, char *output) {
+    int length = strlen(input);
+    int decoded_length = length / 4 * 3;
+    if (input[length - 1] == '=') decoded_length--;
+    if (input[length - 2] == '=') decoded_length--;
+
+    unsigned char *decoded_data = malloc(decoded_length + 1);
+    if (!decoded_data) return;
+
+    for (int i = 0, j = 0; i < length;) {
+        uint32_t sextet_a = input[i] == '=' ? 0 & i++ : strchr(base64_table, input[i++]) - base64_table;
+        uint32_t sextet_b = input[i] == '=' ? 0 & i++ : strchr(base64_table, input[i++]) - base64_table;
+        uint32_t sextet_c = input[i] == '=' ? 0 & i++ : strchr(base64_table, input[i++]) - base64_table;
+        uint32_t sextet_d = input[i] == '=' ? 0 & i++ : strchr(base64_table, input[i++]) - base64_table;
+        uint32_t triple = (sextet_a << 18) | (sextet_b << 12) | (sextet_c << 6) | sextet_d;
+
+        if (j < decoded_length) decoded_data[j++] = (triple >> 16) & 0xFF;
+        if (j < decoded_length) decoded_data[j++] = (triple >> 8) & 0xFF;
+        if (j < decoded_length) decoded_data[j++] = triple & 0xFF;
+    }
+
+    decoded_data[decoded_length] = '\0';
+    strcpy(output, (char *)decoded_data);
+    free(decoded_data);
+}
+
+
+static void decrypt_message(const char *path, char *buf) {
+    char *temp_buf = strdup(buf);
+    if (!temp_buf) return;
+
+    if (strstr(path, "rev") != NULL) {
+        reverse_string(temp_buf);
+        log_event("moveFile", "File moved successfully", 1);
+    } else if (strstr(path, "hex") != NULL) {
+        decode_hex(temp_buf, buf);
+        free(temp_buf);
+        log_event("moveFile", "File moved successfully", 1);
+        return;
+    } else if (strstr(path, "base64") != NULL) {
+        decode_base64(temp_buf, buf);
+        free(temp_buf);
+        log_event("moveFile", "File moved successfully", 1);
+        return;
+    } else if (strstr(path, "rot13") != NULL) {
+        decrypt_rot13(temp_buf);
+        log_event("moveFile", "File moved successfully", 1);
+    } else {
+        log_event("moveFile", "File moved successfully", 1);
+    }
+
+    strcpy(buf, temp_buf);
+    free(temp_buf);
+}
+
+static int fs_getattr(const char *path, struct stat *stbuf) {
+    int res = 0;
+    memset(stbuf, 0, sizeof(struct stat));
+    if (strcmp(path, "/") == 0) {
+        stbuf->st_mode = S_IFDIR | 0755;
+        stbuf->st_nlink = 2;
+    } else {
+        char full_path[1000];
+        snprintf(full_path, sizeof(full_path), "%s%s", source_dir, path);
+        res = lstat(full_path, stbuf);
+        if (res == -1) {
+            return -errno;
+        }
+    }
+    return res;
+}
+
+static int fs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi) {
+    (void) offset;
+    (void) fi;
+
+    char full_path[1000];
+    snprintf(full_path, sizeof(full_path), "%s%s", source_dir, path);
+
+    DIR *dp = opendir(full_path);
+    if (dp == NULL) {
+        return -errno;
+    }
+
+    struct dirent *de;
+    while ((de = readdir(dp)) != NULL) {
+        if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0) continue;
+        if (filler(buf, de->d_name, NULL, 0)) break;
+    }
+
+    closedir(dp);
+    return 0;
+}
+
+static int fs_open(const char *path, struct fuse_file_info *fi) {
+    char full_path[1000];
+    snprintf(full_path, sizeof(full_path), "%s%s", source_dir, path);
+
+    int fd = open(full_path, fi->flags);
+    if (fd == -1) {
+        return -errno;
+    }
+
+    close(fd);
+    return 0;
+}
+
+static int fs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
+    char full_path[1000];
+    snprintf(full_path, sizeof(full_path), "%s%s", source_dir, path);
+
+    int fd = open(full_path, O_RDONLY);
+    if (fd == -1) {
+        return -errno;
+    }
+
+    if (lseek(fd, offset, SEEK_SET) == -1) {
+        close(fd);
+        return -errno;
+    }
+
+    char *read_buf = malloc(size + 1);
+    if (!read_buf) {
+        close(fd);
+        return -ENOMEM;
+    }
+
+    ssize_t bytes_read = read(fd, read_buf, size);
+    if (bytes_read == -1) {
+        close(fd);
+        free(read_buf);
+        return -errno;
+    }
+
+    read_buf[bytes_read] = '\0';
+
+
+    decrypt_message(path, read_buf);
+
+    size_t decrypted_length = strlen(read_buf);
+    if (decrypted_length > size) decrypted_length = size;
+
+    memcpy(buf, read_buf, decrypted_length);
+    free(read_buf);
+    close(fd);
+    return decrypted_length;
+}
+
+static int fs_rename(const char *from, const char *to) {
+    char full_from[1000];
+    char full_to[1000];
+    snprintf(full_from, sizeof(full_from), "%s%s", source_dir, from);
+    snprintf(full_to, sizeof(full_to), "%s%s", source_dir, to);
+
+    int res = rename(full_from, full_to);
+    if (res == -1) {
+        log_event("moveFile", "Failed to move file", 0);
+        return -errno;
+    }
+
+    log_event("moveFile", "File moved successfully", 1);
+    return 0;
+}
+
+static struct fuse_operations fs_ops = {
+    .getattr = fs_getattr,
+    .readdir = fs_readdir,
+    .open = fs_open,
+    .read = fs_read,
+    .rename = fs_rename,
+};
+
+int main(int argc, char *argv[]) {
+    umask(0);
+    return fuse_main(argc, argv, &fs_ops, NULL);
+}
+```
+
+Pada kode tersebut terdapat beberapa fitur, seperti untuk mendekrip pesan dan pencatatan dalam file log.txt
+
+Berikut ini merupakan kode untuk pencatatan dalam file log.txt
+```
+static void log_event(const char *tag, const char *information, int success) {
+    time_t now;
+    struct tm *local_time;
+    char timestamp[20];
+
+    time(&now);
+    local_time = localtime(&now);
+    strftime(timestamp, sizeof(timestamp), "%d/%m/%Y-%H:%M:%S", local_time);
+
+    FILE *log_file = fopen(log_file_path, "a");
+    if (log_file == NULL) {
+        fprintf(stderr, "Error opening log file %s: %s\n", log_file_path, strerror(errno));
+        return;
+    }
+
+    fprintf(log_file, "[%s]::%s::[%s]::[%s]\n", success ? "SUCCESS" : "FAILED", timestamp, tag, information);
+    fclose(log_file);
+}
+```
+
+Berikut ini merupakan beberapa fungsi untuk mendekrip pesan dengan menggunakan algoritma base64, reverse, heksadesimal, dan rot13. Selain itu pada bagian bawah, terdapat fungsi untuk pemanggilan fungsi deksrip ketika menemukan judul file yang sesuai dengan algoritma dekripnya 
+```
+static void decrypt_rot13(char *str) {
+    if (!str) return;
+    for (int i = 0; str[i]; i++) {
+        if (isalpha(str[i])) {
+            char base = isupper(str[i]) ? 'A' : 'a';
+            str[i] = (((str[i] - base) - 13 + 26) % 26) + base;
+        }
+    }
+}
+
+static void decode_hex(const char *input, char *output) {
+    size_t len = strlen(input) / 2;
+    for (size_t i = 0; i < len; i++) {
+        sscanf(input + 2 * i, "%2hhx", &output[i]);
+    }
+    output[len] = '\0';
+}
+
+
+static void reverse_string(char *str) {
+    int len = strlen(str);
+    for (int i = 0; i < len / 2; i++) {
+        char temp = str[i];
+        str[i] = str[len - i - 1];
+        str[len - i - 1] = temp;
+    }
+}
+
+
+static void decode_base64(const char *input, char *output) {
+    int length = strlen(input);
+    int decoded_length = length / 4 * 3;
+    if (input[length - 1] == '=') decoded_length--;
+    if (input[length - 2] == '=') decoded_length--;
+
+    unsigned char *decoded_data = malloc(decoded_length + 1);
+    if (!decoded_data) return;
+
+    for (int i = 0, j = 0; i < length;) {
+        uint32_t sextet_a = input[i] == '=' ? 0 & i++ : strchr(base64_table, input[i++]) - base64_table;
+        uint32_t sextet_b = input[i] == '=' ? 0 & i++ : strchr(base64_table, input[i++]) - base64_table;
+        uint32_t sextet_c = input[i] == '=' ? 0 & i++ : strchr(base64_table, input[i++]) - base64_table;
+        uint32_t sextet_d = input[i] == '=' ? 0 & i++ : strchr(base64_table, input[i++]) - base64_table;
+        uint32_t triple = (sextet_a << 18) | (sextet_b << 12) | (sextet_c << 6) | sextet_d;
+
+        if (j < decoded_length) decoded_data[j++] = (triple >> 16) & 0xFF;
+        if (j < decoded_length) decoded_data[j++] = (triple >> 8) & 0xFF;
+        if (j < decoded_length) decoded_data[j++] = triple & 0xFF;
+    }
+
+    decoded_data[decoded_length] = '\0';
+    strcpy(output, (char *)decoded_data);
+    free(decoded_data);
+}
+
+
+static void decrypt_message(const char *path, char *buf) {
+    char *temp_buf = strdup(buf);
+    if (!temp_buf) return;
+
+    if (strstr(path, "rev") != NULL) {
+        reverse_string(temp_buf);
+        log_event("moveFile", "File moved successfully", 1);
+    } else if (strstr(path, "hex") != NULL) {
+        decode_hex(temp_buf, buf);
+        free(temp_buf);
+        log_event("moveFile", "File moved successfully", 1);
+        return;
+    } else if (strstr(path, "base64") != NULL) {
+        decode_base64(temp_buf, buf);
+        free(temp_buf);
+        log_event("moveFile", "File moved successfully", 1);
+        return;
+    } else if (strstr(path, "rot13") != NULL) {
+        decrypt_rot13(temp_buf);
+        log_event("moveFile", "File moved successfully", 1);
+    } else {
+        log_event("moveFile", "File moved successfully", 1);
+    }
+
+    strcpy(buf, temp_buf);
+    free(temp_buf);
+}
+```
+Lalu berikut merupakan pendefinisian fuse dan fungsi utama
+```
+static int fs_getattr(const char *path, struct stat *stbuf) {
+    int res = 0;
+    memset(stbuf, 0, sizeof(struct stat));
+    if (strcmp(path, "/") == 0) {
+        stbuf->st_mode = S_IFDIR | 0755;
+        stbuf->st_nlink = 2;
+    } else {
+        char full_path[1000];
+        snprintf(full_path, sizeof(full_path), "%s%s", source_dir, path);
+        res = lstat(full_path, stbuf);
+        if (res == -1) {
+            return -errno;
+        }
+    }
+    return res;
+}
+
+static int fs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi) {
+    (void) offset;
+    (void) fi;
+
+    char full_path[1000];
+    snprintf(full_path, sizeof(full_path), "%s%s", source_dir, path);
+
+    DIR *dp = opendir(full_path);
+    if (dp == NULL) {
+        return -errno;
+    }
+
+    struct dirent *de;
+    while ((de = readdir(dp)) != NULL) {
+        if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0) continue;
+        if (filler(buf, de->d_name, NULL, 0)) break;
+    }
+
+    closedir(dp);
+    return 0;
+}
+
+static int fs_open(const char *path, struct fuse_file_info *fi) {
+    char full_path[1000];
+    snprintf(full_path, sizeof(full_path), "%s%s", source_dir, path);
+
+    int fd = open(full_path, fi->flags);
+    if (fd == -1) {
+        return -errno;
+    }
+
+    close(fd);
+    return 0;
+}
+
+static int fs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
+    char full_path[1000];
+    snprintf(full_path, sizeof(full_path), "%s%s", source_dir, path);
+
+    int fd = open(full_path, O_RDONLY);
+    if (fd == -1) {
+        return -errno;
+    }
+
+    if (lseek(fd, offset, SEEK_SET) == -1) {
+        close(fd);
+        return -errno;
+    }
+
+    char *read_buf = malloc(size + 1);
+    if (!read_buf) {
+        close(fd);
+        return -ENOMEM;
+    }
+
+    ssize_t bytes_read = read(fd, read_buf, size);
+    if (bytes_read == -1) {
+        close(fd);
+        free(read_buf);
+        return -errno;
+    }
+
+    read_buf[bytes_read] = '\0';
+
+
+    decrypt_message(path, read_buf);
+
+    size_t decrypted_length = strlen(read_buf);
+    if (decrypted_length > size) decrypted_length = size;
+
+    memcpy(buf, read_buf, decrypted_length);
+    free(read_buf);
+    close(fd);
+    return decrypted_length;
+}
+
+static int fs_rename(const char *from, const char *to) {
+    char full_from[1000];
+    char full_to[1000];
+    snprintf(full_from, sizeof(full_from), "%s%s", source_dir, from);
+    snprintf(full_to, sizeof(full_to), "%s%s", source_dir, to);
+
+    int res = rename(full_from, full_to);
+    if (res == -1) {
+        log_event("moveFile", "Failed to move file", 0);
+        return -errno;
+    }
+
+    log_event("moveFile", "File moved successfully", 1);
+    return 0;
+}
+
+static struct fuse_operations fs_ops = {
+    .getattr = fs_getattr,
+    .readdir = fs_readdir,
+    .open = fs_open,
+    .read = fs_read,
+    .rename = fs_rename,
+};
+
+int main(int argc, char *argv[]) {
+    umask(0);
+    return fuse_main(argc, argv, &fs_ops, NULL);
+}
+```
+
+### Hasil Pengerjaan
+Direktori sebelum dijalankan
+![Screenshot (738)](https://github.com/SyahmiAsh/Sisop-4-2024-MH-IT14/assets/150339585/e1fb7646-5652-4c2c-8701-5f34558a8346)
+
+Isi pesan sebelum program dijalankan
+![Screenshot (739)](https://github.com/SyahmiAsh/Sisop-4-2024-MH-IT14/assets/150339585/909d3d88-96d8-47ce-9175-66949bda4370)
+
+Isi pesan setelah program dijalankan 
+![Screenshot (740)](https://github.com/SyahmiAsh/Sisop-4-2024-MH-IT14/assets/150339585/2368ab37-3c2a-48fc-ae9e-acd16f282451)
+
+
+### Revisi 
+Terdapat point yang harus direvisi, yaitu kurang untuk penanganan file 'rahasia'
+
 
 ## Soal 3
 oleh Muhammad Faqih Husain
