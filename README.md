@@ -236,6 +236,15 @@ cara menjalankannya
 hasil
 
 - watermark foto
+![WhatsApp Image 2024-05-25 at 23 27 34](https://github.com/SyahmiAsh/Sisop-4-2024-MH-IT14/assets/149950475/9ee9a91f-8ee3-4097-8e88-da3a24526e00)
+- Hasil mengubah permission pada file script.sh
+![WhatsApp Image 2024-05-25 at 23 27 28](https://github.com/SyahmiAsh/Sisop-4-2024-MH-IT14/assets/149950475/0e923e3c-df40-455b-aa7f-7909b91ad68f)
+
+# kendala
+kesulitan dalam membuat isi file dengan prefix "test" menjadi tereverse.
+
+# Revisi
+Terdapat revisi untuk reverse file dengan prefix "test" karena masih belum jalan.
  
 
 ## Soal 2
