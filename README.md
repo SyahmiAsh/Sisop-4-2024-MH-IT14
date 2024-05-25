@@ -6,8 +6,241 @@ Laporan pengerjaan soal shift modul 4 Praktikum Sistem Operasi 2024 oleh Kelompo
 3. Muhammad Syahmi Ash Shidqi : 5027231085
 
 ## Soal 1
+Adfi merupakan seorang CEO agency creative bernama Ini Karya Kita. Ia sedang melakukan inovasi pada manajemen project photography Ini Karya Kita. Salah satu ide yang dia kembangkan adalah tentang pengelolaan foto project dalam sistem arsip Ini Karya Kita. Dalam membangun sistem ini, Adfi tidak bisa melakukannya sendirian, dia perlu bantuan mahasiswa Departemen Teknologi Informasi angkatan 2023 untuk membahas konsep baru yang akan mengubah project fotografinya lebih menarik untuk dilihat. Adfi telah menyiapkan portofolio hasil project fotonya yang bisa didownload dan diakses di www.inikaryakita.id . Silahkan eksplorasi web Ini Karya Kita dan temukan halaman untuk bisa mendownload projectnya. Setelah kalian download terdapat folder gallery dan bahaya.
+
+langkah yang pertama kita harus membuat sebuah direktori, pada direktori tersebut kita mendownload portofolio dari www.inikaryakita.id didalam web itu kita bisa pilih service fotografi dan nnti ada untuk download portofolio sisop apa bila kita sudah dapat link filenya maka kita bisa mendownloadnya `wget -O Resource "https://drive.google.com/uc?export=download&id=1VP6o84AQfY6QbghFGkw6ghxkBbv7fpum"`
+
+bila sudah terdownload kita harus mengunzipnya `unzip Resource` di dalam file portofolio terdapat file gallery dan bahaya
+
+Pada folder “gallery”:
+- Membuat folder dengan prefix "wm." Dalam folder ini, setiap gambar yang dipindahkan ke dalamnya akan diberikan watermark bertuliskan inikaryakita.id. 
+
+Pada folder "bahaya," terdapat file bernama "script.sh." 
+- mengubah permission pada file "script.sh" agar bisa dijalankan, karena jika dijalankan maka dapat menghapus semua dan isi dari  "gallery".
+- membuat file dengan prefix "test" yang ketika disimpan akan mengalami pembalikan (reverse) isi dari file tersebut.
+
+```
+#define FUSE_USE_VERSION 31
+
+#include <fuse.h>
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stddef.h>
+#include <assert.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <syslog.h> // Include syslog for logging
+```
+untuk librarynya dan mendefinisikan fuse veri 31
+
+```
+static const char *dirpath = "/home/ash23/soalsisop";
+static const char *bahaya_path = "/home/ash23/soalsisop/bahaya/script.sh";
+```
+untuk alokasi letak programnya
+untuk alokasi file script.sh
+
+```
+// Function to add watermark to an image using ImageMagick
+int add_watermark(const char *filepath) {
+    char command[1024];
+    snprintf(command, sizeof(command), "convert %s -gravity SouthEast -pointsize 36 -draw \"text 10,10 'inikaryakita.id'\" %s", filepath, filepath);
+    syslog(LOG_INFO, "Executing command: %s", command); // Log the command to be executed
+    int result = system(command);
+    if (result != 0) {
+        syslog(LOG_ERR, "Command execution failed with result: %d", result); // Log if the command fails
+    }
+    return result;
+}
+```
+fungsi untuk menambahkan watermark nya
+```
+// Reverse the content of the file
+void reverse_content(const char *filepath) {
+    FILE *file = fopen(filepath, "r+");
+    if (file == NULL) return;
+
+    fseek(file, 0, SEEK_END);
+    long size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    char *content = malloc(size + 1);
+    if (content == NULL) {
+        fclose(file);
+        return;
+    }
+
+    fread(content, 1, size, file);
+    for (long i = 0; i < size / 2; ++i) {
+        char tmp = content[i];
+        content[i] = content[size - 1 - i];
+        content[size - 1 - i] = tmp;
+    }
+
+    fseek(file, 0, SEEK_SET);
+    fwrite(content, 1, size, file);
+    fclose(file);
+    free(content);
+}
+
+static int hello_getattr(const char *path, struct stat *stbuf)
+{
+    char fpath[1000];
+    sprintf(fpath, "%s%s", dirpath, path);
+    int res = lstat(fpath, stbuf);
+    if (res == -1) return -errno;
+    return 0;
+}
+
+static int hello_mkdir(const char *path, mode_t mode)
+{
+    char fpath[1000];
+    sprintf(fpath, "%s%s", dirpath, path);
+    int res = mkdir(fpath, mode);
+    if (res == -1) return -errno;
+    return 0;
+}
+```
+fungsi untuk membuat folder
+```
+static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi)
+{
+    char fpath[1000];
+    sprintf(fpath, "%s%s", dirpath, path);
+
+    DIR *dp = opendir(fpath);
+    if (dp == NULL) return -errno;
+
+    struct dirent *de;
+    while ((de = readdir(dp)) != NULL) {
+        struct stat st;
+        memset(&st, 0, sizeof(st));
+        st.st_ino = de->d_ino;
+        st.st_mode = de->d_type << 12;
+        if (filler(buf, de->d_name, &st, 0)) break;
+    }
+    closedir(dp);
+    return 0;
+}
+
+static int hello_open(const char *path, struct fuse_file_info *fi)
+{
+    char fpath[1000];
+    sprintf(fpath, "%s%s", dirpath, path);
+
+    int res = open(fpath, fi->flags);
+    if (res == -1) return -errno;
+    close(res);
+    return 0;
+}
+
+static int hello_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
+{
+    char fpath[1000];
+    sprintf(fpath, "%s%s", dirpath, path);
+
+    int fd = open(fpath, O_RDONLY);
+    if (fd == -1) return -errno;
+
+    int res = pread(fd, buf, size, offset);
+    if (res == -1) res = -errno;
+    close(fd);
+    return res;
+}
+
+static int hello_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
+{
+    char fpath[1000];
+    sprintf(fpath, "%s%s", dirpath, path);
+    
+    // Handling files with prefix 'test'
+    if (strncmp(path, "/test", 5) == 0) {
+        reverse_content(fpath);
+    }
+
+    int fd = open(fpath, O_WRONLY);
+    if (fd == -1) return -errno;
+
+    int res = pwrite(fd, buf, size, offset);
+    if (res == -1) res = -errno;
+    close(fd);
+    return res;
+}
+```
+fungsi untuk menuliskan isi file dan apabila ada file dengan prefix "test" maka akan msuk ke fungsi reverse_content
+```
+static int hello_rename(const char *from, const char *to)
+{
+    char ffrom[1000], fto[1000];
+    sprintf(ffrom, "%s%s", dirpath, from);
+    sprintf(fto, "%s%s", dirpath, to);
+
+    syslog(LOG_INFO, "Renaming from %s to %s", ffrom, fto); // Log rename paths
+
+    int res = rename(ffrom, fto);
+    if (res == -1) {
+        syslog(LOG_ERR, "Rename failed: %s", strerror(errno)); // Log error if rename fails
+        return -errno;
+    }
+
+    // Add watermark if the file is moved to a directory with prefix 'wm-foto'
+    if (strstr(to, "/wm-foto/") != NULL) {
+        syslog(LOG_INFO, "Adding watermark to %s", fto); // Log before adding watermark
+        int wm_res = add_watermark(fto);
+        if (wm_res != 0) {
+            syslog(LOG_ERR, "Failed to add watermark: %s", strerror(errno)); // Log error if adding watermark fails
+        }
+    }
+    
+    return 0;
+}
+
+static struct fuse_operations hello_oper = {
+    .getattr    = hello_getattr,
+    .mkdir      = hello_mkdir,
+    .readdir    = hello_readdir,
+    .open       = hello_open,
+    .read       = hello_read,
+    .write      = hello_write,
+    .rename     = hello_rename,
+};
+```
+untuk inti dari programnya
+```
+int main(int argc, char *argv[])
+{
+    openlog("FUSE_FS", LOG_PID | LOG_CONS, LOG_USER); // Open syslog
+    umask(0);
+
+    // Change permission of script.sh to make it executable
+    chmod(bahaya_path, 0755);
+
+    int fuse_stat = fuse_main(argc, argv, &hello_oper, NULL);
+    closelog(); // Close syslog
+    return fuse_stat;
+}
+```
+
+cara menjalankannya 
+
+`gcc -Wall pkg-config fuse --cflags [file.c] -o [output] pkg-config fuse --libs`
+
+`mkdir filemount`
+
+`./output filemount`
+
+hasil
+
+- watermark foto
+ 
+
 
 ## Soal 2
+Masih dengan Ini Karya Kita, sang CEO ingin melakukan tes keamanan pada folder sensitif Ini Karya Kita. Karena Teknologi Informasi merupakan departemen dengan salah satu fokus di Cyber Security, maka dia kembali meminta bantuan mahasiswa Teknologi Informasi angkatan 2023 untuk menguji dan mengatur keamanan pada folder sensitif tersebut. Untuk mendapatkan folder sensitif itu, mahasiswa IT 23 harus kembali mengunjungi website Ini Karya Kita pada www.inikaryakita.id/schedule . Silahkan isi semua formnya, tapi pada form subject isi dengan nama kelompok_SISOP24 , ex: IT01_SISOP24 . Lalu untuk form Masukkan Pesanmu, ketik “Mau Foldernya” . Tunggu hingga 1x24 jam, maka folder sensitif tersebut akan dikirimkan melalui email kalian. Apabila folder tidak dikirimkan ke email kalian, maka hubungi sang CEO untuk meminta bantuan.
 
 ## Soal 3
 oleh Muhammad Faqih Husain
