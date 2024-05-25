@@ -747,6 +747,14 @@ int main(int argc, char *argv[]) {
 }
 ```
 
+#### Cara Menjalankan
+compile
+gcc -D_FILE_OFFSET_BITS=64 -I/usr/include/fuse -o  pastibisa pastibisa.c -lfuse -lpthread -ldl -lssl -lcrypto
+
+menjalankan
+./pastibisa /home/tsll/pst/file
+
+
 ### Hasil Pengerjaan
 Direktori sebelum dijalankan
 ![Screenshot (738)](https://github.com/SyahmiAsh/Sisop-4-2024-MH-IT14/assets/150339585/e1fb7646-5652-4c2c-8701-5f34558a8346)
